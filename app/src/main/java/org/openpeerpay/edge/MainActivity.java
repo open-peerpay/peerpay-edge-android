@@ -15,7 +15,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowInsets;
@@ -356,8 +359,7 @@ public class MainActivity extends Activity {
         heroStatusText.setTextColor(paired && (accessibility || notification) ? COLOR_GREEN : paired ? COLOR_GOLD : COLOR_CORAL);
         serverText.setText("服务器  " + emptyAsDash(AppConfig.getServerBaseUrl(this)));
         accountsText.setText("账号  " + describeAccounts());
-        serviceText.setText("服务  无障碍 " + (accessibility ? "ON" : "OFF")
-                + "  ·  通知读取 " + (notification ? "ON" : "OFF"));
+        serviceText.setText(serviceStatusText(accessibility, notification));
 
         StringBuilder builder = new StringBuilder();
         builder.append("设备 ID  ").append(AppConfig.getDeviceId(this)).append('\n');
@@ -454,6 +456,28 @@ public class MainActivity extends Activity {
 
     private String emptyAsDash(String value) {
         return value == null || value.trim().isEmpty() ? "-" : value;
+    }
+
+    private SpannableString serviceStatusText(boolean accessibility, boolean notification) {
+        String first = dotStatus(accessibility);
+        String second = dotStatus(notification);
+        String text = "服务  无障碍 " + first + "  ·  通知读取 " + second;
+        SpannableString spannable = new SpannableString(text);
+        int firstIndex = text.indexOf('●');
+        int secondIndex = text.indexOf('●', firstIndex + 1);
+        if (firstIndex >= 0) {
+            spannable.setSpan(new ForegroundColorSpan(accessibility ? COLOR_GREEN : COLOR_GOLD),
+                    firstIndex, firstIndex + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        if (secondIndex >= 0) {
+            spannable.setSpan(new ForegroundColorSpan(notification ? COLOR_GREEN : COLOR_GOLD),
+                    secondIndex, secondIndex + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        return spannable;
+    }
+
+    private String dotStatus(boolean enabled) {
+        return enabled ? "● 已开启" : "● 待授权";
     }
 
     private LinearLayout.LayoutParams matchWrap() {
