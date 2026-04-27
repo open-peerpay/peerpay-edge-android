@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PeerPay Edge</string>
+    <string name="accessibility_service_label">PeerPay 收款监听</string>
+    <string name="accessibility_service_description">监听微信和支付宝收款通知，并安全上报到已绑定的 PeerPay 服务端。</string>
+    <string name="notification_listener_label">PeerPay 通知监听</string>
+    <string name="foreground_channel_name">PeerPay 保活</string>
+    <string name="foreground_title_bound">PeerPay 正在监听收款</string>
+    <string name="foreground_title_unbound">PeerPay 等待扫码绑定</string>
+    <string name="foreground_text">微信和支付宝到账通知会自动上报。</string>
+</resources>
