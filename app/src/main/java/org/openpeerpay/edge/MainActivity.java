@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,7 +18,7 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.Button;
+import android.view.WindowInsets;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -35,14 +37,32 @@ import java.util.Date;
 public class MainActivity extends Activity {
     private static final int REQUEST_CAMERA = 1001;
     private static final int REQUEST_POST_NOTIFICATIONS = 1002;
+    private static final int COLOR_BG = Color.rgb(10, 15, 18);
+    private static final int COLOR_PANEL = Color.rgb(18, 27, 30);
+    private static final int COLOR_PANEL_2 = Color.rgb(24, 36, 39);
+    private static final int COLOR_TEXT = Color.rgb(234, 243, 238);
+    private static final int COLOR_MUTED = Color.rgb(139, 156, 150);
+    private static final int COLOR_GREEN = Color.rgb(57, 224, 157);
+    private static final int COLOR_GOLD = Color.rgb(244, 184, 75);
+    private static final int COLOR_CORAL = Color.rgb(255, 111, 97);
+    private static final int COLOR_STROKE = Color.rgb(45, 67, 65);
 
     private TextView statusText;
     private TextView logText;
+    private TextView heroStatusText;
+    private TextView serverText;
+    private TextView accountsText;
+    private TextView serviceText;
+    private LinearLayout rootView;
     private boolean scanAfterPermission;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setStatusBarColor(COLOR_BG);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setNavigationBarColor(COLOR_BG);
+        }
         buildUi();
         requestPostNotificationPermission();
         ForegroundKeepAliveService.start(this);
@@ -83,63 +103,180 @@ public class MainActivity extends Activity {
 
     private void buildUi() {
         ScrollView scrollView = new ScrollView(this);
+        scrollView.setBackgroundColor(COLOR_BG);
         LinearLayout root = new LinearLayout(this);
+        rootView = root;
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(20), dp(20), dp(20), dp(24));
+        applySafeAreaPadding();
         scrollView.addView(root);
+
+        TextView eyebrow = new TextView(this);
+        eyebrow.setText("EDGE LISTENER");
+        eyebrow.setTextSize(12);
+        eyebrow.setTypeface(Typeface.DEFAULT_BOLD);
+        eyebrow.setTextColor(COLOR_GREEN);
+        eyebrow.setLetterSpacing(0.12f);
+        root.addView(eyebrow, matchWrap());
 
         TextView title = new TextView(this);
         title.setText("PeerPay Edge");
-        title.setTextSize(24);
-        title.setTextColor(Color.rgb(24, 32, 28));
+        title.setTextSize(30);
+        title.setTypeface(Typeface.DEFAULT_BOLD);
+        title.setTextColor(COLOR_TEXT);
         title.setGravity(Gravity.START);
+        title.setPadding(0, dp(4), 0, 0);
         root.addView(title, matchWrap());
 
         TextView subtitle = new TextView(this);
-        subtitle.setText("扫码绑定服务端，监听微信和支付宝收款通知。");
+        subtitle.setText("扫码绑定服务端，自动监听微信与支付宝到账。");
         subtitle.setTextSize(14);
-        subtitle.setTextColor(Color.rgb(84, 96, 90));
-        subtitle.setPadding(0, dp(6), 0, dp(16));
+        subtitle.setTextColor(COLOR_MUTED);
+        subtitle.setPadding(0, dp(6), 0, dp(18));
         root.addView(subtitle, matchWrap());
 
-        statusText = new TextView(this);
-        statusText.setTextSize(14);
-        statusText.setTextColor(Color.rgb(36, 48, 42));
-        statusText.setLineSpacing(2, 1.1f);
-        statusText.setPadding(dp(14), dp(14), dp(14), dp(14));
-        statusText.setBackgroundColor(Color.rgb(239, 247, 243));
-        root.addView(statusText, matchWrap());
+        LinearLayout hero = new LinearLayout(this);
+        hero.setOrientation(LinearLayout.VERTICAL);
+        hero.setPadding(dp(16), dp(16), dp(16), dp(16));
+        hero.setBackground(panelBg(COLOR_PANEL, COLOR_STROKE, dp(18)));
+        root.addView(hero, matchWrap());
 
-        addButton(root, "扫码绑定账号", view -> ensureCameraAndScan());
-        addButton(root, "粘贴配对链接", view -> showPasteDialog());
-        addButton(root, "打开无障碍授权", view -> openSettings(Settings.ACTION_ACCESSIBILITY_SETTINGS));
-        addButton(root, "打开通知读取授权", view -> openNotificationListenerSettings());
-        addButton(root, "忽略电池优化", view -> requestBatteryOptimizationExemption());
-        addButton(root, "启动前台服务", view -> {
+        heroStatusText = new TextView(this);
+        heroStatusText.setTextSize(16);
+        heroStatusText.setTypeface(Typeface.DEFAULT_BOLD);
+        heroStatusText.setTextColor(COLOR_TEXT);
+        hero.addView(heroStatusText, matchWrap());
+
+        serverText = smallLine();
+        serverText.setPadding(0, dp(10), 0, 0);
+        hero.addView(serverText, matchWrap());
+
+        accountsText = smallLine();
+        accountsText.setPadding(0, dp(4), 0, 0);
+        hero.addView(accountsText, matchWrap());
+
+        serviceText = smallLine();
+        serviceText.setPadding(0, dp(4), 0, 0);
+        hero.addView(serviceText, matchWrap());
+
+        statusText = new TextView(this);
+        statusText.setTextSize(13);
+        statusText.setTextColor(COLOR_MUTED);
+        statusText.setLineSpacing(3, 1.05f);
+        statusText.setPadding(dp(14), dp(14), dp(14), dp(14));
+        statusText.setBackground(panelBg(COLOR_PANEL_2, COLOR_STROKE, dp(14)));
+        LinearLayout.LayoutParams statusParams = matchWrap();
+        statusParams.topMargin = dp(12);
+        root.addView(statusText, statusParams);
+
+        addSectionTitle(root, "绑定");
+        addButton(root, "扫码绑定账号", true, view -> ensureCameraAndScan());
+        addButton(root, "粘贴配对链接", false, view -> showPasteDialog());
+
+        addSectionTitle(root, "权限");
+        addButton(root, "无障碍授权", false, view -> openSettings(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+        addButton(root, "通知读取授权", false, view -> openNotificationListenerSettings());
+        addButton(root, "忽略电池优化", false, view -> requestBatteryOptimizationExemption());
+
+        addSectionTitle(root, "运行");
+        addButton(root, "启动前台服务", false, view -> {
             ForegroundKeepAliveService.start(this);
             appendLog("前台服务已启动");
             refreshStatus();
         });
-        addButton(root, "立即发送心跳", view -> sendManualHeartbeat());
+        addButton(root, "立即发送心跳", false, view -> sendManualHeartbeat());
 
         logText = new TextView(this);
         logText.setTextSize(13);
-        logText.setTextColor(Color.rgb(72, 83, 78));
-        logText.setPadding(0, dp(18), 0, 0);
-        root.addView(logText, matchWrap());
+        logText.setTextColor(COLOR_MUTED);
+        logText.setLineSpacing(3, 1.05f);
+        logText.setPadding(dp(14), dp(14), dp(14), dp(14));
+        logText.setBackground(panelBg(Color.rgb(14, 21, 23), Color.rgb(34, 50, 49), dp(14)));
+        LinearLayout.LayoutParams logParams = matchWrap();
+        logParams.topMargin = dp(14);
+        root.addView(logText, logParams);
+
+        TextView footnote = new TextView(this);
+        footnote.setText("保持前台通知显示，后台监听更稳定。");
+        footnote.setTextSize(12);
+        footnote.setTextColor(Color.rgb(100, 118, 112));
+        footnote.setGravity(Gravity.CENTER);
+        footnote.setPadding(0, dp(16), 0, 0);
+        root.addView(footnote, matchWrap());
 
         setContentView(scrollView);
+        applySafeAreaPadding();
     }
 
-    private void addButton(LinearLayout root, String text, View.OnClickListener listener) {
-        Button button = new Button(this);
-        button.setAllCaps(false);
+    private void applySafeAreaPadding() {
+        if (rootView == null) {
+            return;
+        }
+        int top = dp(24) + getStatusBarHeight();
+        int bottom = dp(24) + getNavigationBarHeight();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            WindowInsets insets = getWindow().getDecorView().getRootWindowInsets();
+            if (insets != null) {
+                top = dp(24) + insets.getSystemWindowInsetTop();
+                bottom = dp(24) + insets.getSystemWindowInsetBottom();
+            }
+        }
+        rootView.setPadding(dp(18), top, dp(18), bottom);
+    }
+
+    private void addSectionTitle(LinearLayout root, String text) {
+        TextView title = new TextView(this);
+        title.setText(text);
+        title.setTextSize(12);
+        title.setTypeface(Typeface.DEFAULT_BOLD);
+        title.setTextColor(Color.rgb(164, 180, 174));
+        title.setPadding(0, dp(18), 0, dp(2));
+        root.addView(title, matchWrap());
+    }
+
+    private TextView smallLine() {
+        TextView view = new TextView(this);
+        view.setTextSize(13);
+        view.setTextColor(COLOR_MUTED);
+        view.setSingleLine(false);
+        return view;
+    }
+
+    private void addButton(LinearLayout root, String text, boolean primary, View.OnClickListener listener) {
+        TextView button = new TextView(this);
         button.setText(text);
         button.setTextSize(15);
+        button.setTypeface(Typeface.DEFAULT_BOLD);
+        button.setGravity(Gravity.CENTER);
+        button.setMinHeight(dp(48));
+        button.setPadding(dp(12), 0, dp(12), 0);
+        button.setTextColor(primary ? Color.rgb(5, 20, 17) : COLOR_TEXT);
+        button.setBackground(primary
+                ? gradientBg(COLOR_GREEN, COLOR_GOLD, dp(14))
+                : panelBg(Color.rgb(23, 34, 37), Color.rgb(51, 75, 73), dp(14)));
         button.setOnClickListener(listener);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            button.setElevation(primary ? dp(4) : dp(1));
+        }
         LinearLayout.LayoutParams params = matchWrap();
         params.topMargin = dp(10);
         root.addView(button, params);
+    }
+
+    private GradientDrawable panelBg(int fill, int stroke, int radius) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(fill);
+        drawable.setCornerRadius(radius);
+        drawable.setStroke(dp(1), stroke);
+        return drawable;
+    }
+
+    private GradientDrawable gradientBg(int start, int end, int radius) {
+        GradientDrawable drawable = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{start, end}
+        );
+        drawable.setCornerRadius(radius);
+        return drawable;
     }
 
     private void ensureCameraAndScan() {
@@ -211,15 +348,21 @@ public class MainActivity extends Activity {
     }
 
     private void refreshStatus() {
+        boolean paired = AppConfig.isPaired(this);
+        boolean accessibility = isAccessibilityEnabled(this);
+        boolean notification = isNotificationListenerEnabled(this);
+        heroStatusText.setText((paired ? "● 已绑定" : "● 等待绑定")
+                + "  /  " + (accessibility || notification ? "监听在线" : "授权未完成"));
+        heroStatusText.setTextColor(paired && (accessibility || notification) ? COLOR_GREEN : paired ? COLOR_GOLD : COLOR_CORAL);
+        serverText.setText("服务器  " + emptyAsDash(AppConfig.getServerBaseUrl(this)));
+        accountsText.setText("账号  " + describeAccounts());
+        serviceText.setText("服务  无障碍 " + (accessibility ? "ON" : "OFF")
+                + "  ·  通知读取 " + (notification ? "ON" : "OFF"));
+
         StringBuilder builder = new StringBuilder();
-        builder.append("绑定状态：").append(AppConfig.isPaired(this) ? "已绑定" : "未绑定").append('\n');
-        builder.append("服务器：").append(emptyAsDash(AppConfig.getServerBaseUrl(this))).append('\n');
-        builder.append("设备 ID：").append(AppConfig.getDeviceId(this)).append('\n');
-        builder.append("绑定账号：").append(describeAccounts()).append('\n');
-        builder.append("无障碍监听：").append(isAccessibilityEnabled(this) ? "已开启" : "未开启").append('\n');
-        builder.append("通知读取：").append(isNotificationListenerEnabled(this) ? "已开启" : "未开启").append('\n');
-        builder.append("上次心跳：").append(formatTime(AppConfig.getLastHeartbeat(this))).append('\n');
-        builder.append("上次上报：").append(formatTime(AppConfig.getLastNotification(this)));
+        builder.append("设备 ID  ").append(AppConfig.getDeviceId(this)).append('\n');
+        builder.append("上次心跳  ").append(formatTime(AppConfig.getLastHeartbeat(this))).append('\n');
+        builder.append("上次上报  ").append(formatTime(AppConfig.getLastNotification(this)));
         statusText.setText(builder.toString());
     }
 
@@ -318,6 +461,22 @@ public class MainActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         );
+    }
+
+    private int getStatusBarHeight() {
+        return getSystemDimension("status_bar_height");
+    }
+
+    private int getNavigationBarHeight() {
+        return getSystemDimension("navigation_bar_height");
+    }
+
+    private int getSystemDimension(String name) {
+        int resourceId = getResources().getIdentifier(name, "dimen", "android");
+        if (resourceId > 0) {
+            return getResources().getDimensionPixelSize(resourceId);
+        }
+        return 0;
     }
 
     private int dp(int value) {
